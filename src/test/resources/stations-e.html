@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html style="" class="js flexbox flexboxlegacy canvas canvastext webgl no-touch geolocation postmessage no-websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients no-cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers applicationcache svg inlinesvg smil svgclippaths csstransformspreserve3d no-androidnative no-ipad no-iphone no-ipod no-appleios" lang="pl-PL"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <title>Intercity</title>
+      <meta name="description" content="">
+      <link rel="apple-touch-icon" sizes="57x57" href="http://infopasazer.intercity.pl/images/apple-touch-icon-57x57.png">
+      <link rel="apple-touch-icon" sizes="114x114" href="http://infopasazer.intercity.pl/images/apple-touch-icon-114x114.png">
+      <link rel="apple-touch-icon" sizes="72x72" href="http://infopasazer.intercity.pl/images/apple-touch-icon-72x72.png">
+      <link rel="apple-touch-icon" sizes="144x144" href="http://infopasazer.intercity.pl/images/apple-touch-icon-144x144.png">
+      <link rel="apple-touch-icon" sizes="60x60" href="http://infopasazer.intercity.pl/images/apple-touch-icon-60x60.png">
+      <link rel="apple-touch-icon" sizes="120x120" href="http://infopasazer.intercity.pl/images/apple-touch-icon-120x120.png">
+      <link rel="apple-touch-icon" sizes="76x76" href="http://infopasazer.intercity.pl/images/apple-touch-icon-76x76.png">
+      <link rel="apple-touch-icon" sizes="152x152" href="http://infopasazer.intercity.pl/images/apple-touch-icon-152x152.png">
+      <link rel="icon" type="image/png" href="http://infopasazer.intercity.pl/images/favicon-196x196.png" sizes="196x196">
+      <link rel="icon" type="image/png" href="http://infopasazer.intercity.pl/images/favicon-160x160.png" sizes="160x160">
+      <link rel="icon" type="image/png" href="http://infopasazer.intercity.pl/images/favicon-96x96.png" sizes="96x96">
+      <link rel="icon" type="image/png" href="http://infopasazer.intercity.pl/images/favicon-16x16.png" sizes="16x16">
+      <link rel="icon" type="image/png" href="http://infopasazer.intercity.pl/images/favicon-32x32.png" sizes="32x32">
+      <meta name="msapplication-TileColor" content="#0076c8">
+      <meta name="msapplication-TileImage" content="images/mstile-144x144.png">
+      <!--[if IE]>
+     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+  <link rel="stylesheet" href="stations-e_pliki/main.css">
+  <link rel="stylesheet" href="stations-e_pliki/add.css">
+
+  <script src="stations-e_pliki/analytics.js" async=""></script><script>
+     var baseUrl = window.location.origin;// 'http://localhost:9000';
+     var jsFilesUrl = window.location.origin + 'scripts/';//'http://localhost:9000/scripts/';
+     var siteLang = 'pl';
+     var siteDictionary = {}
+  </script>
+
+  <style>
+     #loaderMask {
+        position: fixed; top: 0px; left: 0px;
+        z-index: 1001;
+        width: 100%; height: 2px;
+        background: #ffffff;
+     }
+
+     #loaderMask span {
+        display: block;
+        width: 0%; height: 2px;
+        background: #cc0000;
+     }
+  </style>
+
+  <script src="stations-e_pliki/vendor.js"></script>
+
+  <script>
+     $(document).ready(function() {
+
+        //indexOf support for IE8 and below. 
+        if (!Array.prototype.indexOf) {
+           Array.prototype.indexOf = function(elt /*, from*/) {
+              var len = this.length >>> 0;
+
+              var from = Number(arguments[1]) || 0;
+              from = (from < 0)
+                      ? Math.ceil(from)
+                      : Math.floor(from);
+              if (from < 0)
+                 from += len;
+
+              for (; from < len; from++) {
+                 if (from in this &&
+                         this[from] === elt)
+                    return from;
+              }
+              return -1;
+           };
+        }
+
+        //bgImg for holding background images in the page & img array for images present in the document(<img src="">).
+        var bgImg = [], img = [], count = 0, percentage = 0;
+
+        //Creating loader holder. 
+        $('<div id="loaderMask"><span class="Mover"></span></div>').appendTo('body');
+
+        //Using jQuery filter method we parse all elemnts in the page and adds background image url & images src into respective arrays.
+        $('*').filter(function() {
+
+           var val = $(this).css('background-image').replace(/url\(/g, '').replace(/\)/, '').replace(/"/g, '');
+           var imgVal = $(this).not('script').attr('src');
+
+           //Getting urls of background images.
+           if (val !== 'none' && !/linear-gradient/g.test(val) && bgImg.indexOf(val) === -1) {
+              bgImg.push(val);
+           }
+
+           //Getting src of images in the document.
+           if (imgVal !== undefined && img.indexOf(imgVal) === -1) {
+              img.push(imgVal);
+           }
+
+        });
+
+        //Merging both bg image array & img src array
+        var imgArray = bgImg.concat(img);
+
+        //Adding events for all the images in the array.
+        $.each(imgArray, function(i, val) {
+           //Attaching load event 
+           $("<img />").attr("src", val).bind("load", function() {
+              completeImageLoading();
+           });
+
+           //Attaching error event
+           $("<img />").attr("src", val).bind("error", function() {
+              imgError(this);
+           });
+        });
+
+        //After each successful image load we will create percentage.
+        function completeImageLoading() {
+           count++;
+           percentage = Math.floor(count / imgArray.length * 100);
+           $('#loaderMask > span').css({'width': '' + percentage + '%'});
+
+           //When percentage is 100 we will remove loader and display page.
+           if (percentage === 100) {
+              $('#loaderMask > span').css({'width': '100%'});
+              $('#loaderMask').fadeOut(function() {
+                 $('#loaderMask').remove();
+              })
+           }
+        }
+
+        //Error handling - When image fails to load we will remove the mask & shows the page. 
+        function imgError(arg) {
+           $('#loaderMask').html("Image failed to load.. Loader quitting..").delay(3000).fadeOut(1000, function() {
+              $('#loaderMask').remove();
+           });
+        }
+
+     });
+  </script>
+<style type="text/css">.fancybox-margin{margin-right:14px;}</style></head>
+<body class="">
+  <div class="container-fluid">
+     <div class="row">
+        <div class="col-md-12">
+           <div class="page-wrapper mtl">
+           <div class="page-header pbs mbl">
+              <h1 class="h2">Informacja dla podróżnych o ruchu pociągów</h1>
+			  <div class="text-center pbm">
+                  <a href="http://www.intercity.pl/" target="_blank" title="PKP Intercity S.A.">
+                    <img src="stations-e_pliki/baner_infopas.jpg" alt="PKP Intercity S.A." class="">
+                  </a>
+				</div>
+          </div>
+            <div class="">
+   <p>Proszę wybrać stację z listy:</p>
+</div>
+
+
+  <div class="border-bottom pbl mtm">
+     <div class="row">
+        <div class="clearfix">
+           <div class="col-md-6">
+              <a href="http://infopasazer.intercity.pl/index.php" title="" class="btn btn-link btn-link-left"><span>Powrót</span></a>
+           </div>
+        </div>
+        
+        <div class="table--box">
+           <div class="table-box__inner pbn pts">
+              <div class="table-responsive">
+                 
+                 <table class="table table-delay _C mbn">
+                    <thead>
+                       <tr>
+                          <th colspan="3">Nazwa stacji</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                                                                  <tr class="_TableDelayCol_C-None">
+                                                 <td class="Col link" onclick="window.location='?p=station&amp;id=8151'">
+                             <span class="">Elbląg                        </span>
+                          </td>
+                                                                                             <td class="Col link" onclick="window.location='?p=station&amp;id=11809'">
+                             <span class="">Ełk                           </span>
+                          </td>
+                                                                                             <td class="Col link" onclick="window.location='?p=station&amp;id=12237'">
+                             <span class="">Ełk Szyba Wschód              </span>
+                          </td>
+                                               </tr>
+                                                                </tbody>
+                 </table>
+              </div>
+           </div>
+        </div>
+     </div>
+  </div>
+             
+           <div class="text-center pbm">
+                  <a class="log_spolek" href="http://www.intercity.pl/" target="_blank" title="PKP Intercity S.A.">
+                    <img src="stations-e_pliki/ic.png" alt="PKP Intercity S.A." class="">
+                  </a>
+                  <a href="http://www.plk-sa.pl/" target="_blank" title="PKP Polskie Linie Kolejowe S.A." class="log_spolek">
+                    <img src="stations-e_pliki/pkp.png" alt="PKP Polskie Linie Kolejowe S.A." class="">
+                  </a>
+                  <a href="http://www.arriva.pl/" target="_blank" title="Arriva Sp. z o.o." class="log_spolek">
+                    <img src="stations-e_pliki/arriva.png" alt="Arriva Sp. z o.o." class="">
+                  </a>
+                  <a href="http://kolejedolnoslaskie.eu/" target="_blank" title="Koleje Dolnośląskie Sp. z o.o." class="log_spolek">
+                    <img src="stations-e_pliki/koleje-dolnoslaskie.png" alt="Koleje Dolnośląskie Sp. z o.o." class="">
+                  </a>
+                  <a href="http://www.mazowieckie.com.pl/" target="_blank" title="Koleje Mazowieckie - KM Sp. z o.o." class="log_spolek">
+                    <img src="stations-e_pliki/koleje-mazowieckie-small.png" alt="Koleje Mazowieckie - KM Sp. z o.o. class=" "="">
+                  </a>
+                  <a href="http://kolejeslaskie.com/pl" target="_blank" title="Koleje Śląskie Sp. z o.o." class="log_spolek">
+                    <img src="stations-e_pliki/koleje-slaskie.png" alt="Koleje Śląskie Sp. z o.o." class="">
+                  </a>
+                  <a href="http://koleje-wielkopolskie.com.pl/" target="_blank" title="Koleje Wielkopolskie Sp. z o.o." class="log_spolek">
+                    <img src="stations-e_pliki/koleje-wielkopolskie.png" alt="Koleje Wielkopolskie Sp. z o.o." class="">
+                  </a>
+                  <a href="http://www.przewozyregionalne.pl/" target="_blank" title="Przewozy Regionalne Sp. z o.o." class="log_spolek">
+                    <img src="stations-e_pliki/przewozy-regionalne.png" alt="Przewozy Regionalne Sp. z o.o." class="">
+                  </a>
+                  <a href="http://www.skm.pkp.pl/" target="_blank" title="SKM Trójmiasto Sp. z o.o.	" class="log_spolek">
+                    <img src="stations-e_pliki/skm2.png" alt="SKM Trójmiasto Sp. z o.o." class="">
+                  </a>
+                  <a href="http://www.skm.warszawa.pl/" target="_blank" title="SKM Warszawa Sp. z o.o." class="log_spolek">
+                    <img src="stations-e_pliki/skm.png" alt="SKM Warszawa Sp. z o.o." class="">
+                  </a>
+					<a href="http://lka.lodzkie.pl/" target="_blank" title="Łódzka Kolej Aglomeracyjna" class="log_spolek">
+                    <img src="stations-e_pliki/logo_lka.jpg" alt="Łódzka Kolej Aglomeracyjna" class="log_spolek">
+                  </a>
+               </div>
+           
+           </div>
+        </div>
+     </div>
+  </div>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-59892601-1', 'auto');
+    ga('send', 'pageview');
+
+  </script>
+
+      <script src="stations-e_pliki/main.js"></script>
+   
+
+<div style="right: 93px ! important; bottom: 93px ! important;" class="" id="UNIQUE_ID-ghostery"><div id="UNIQUE_ID-box-shadow"></div><div id="UNIQUE_ID-box-pulse"></div><div id="UNIQUE_ID-box-background"></div><div id="UNIQUE_ID-box-menu"><div class="UNIQUE_ID-button" id="UNIQUE_ID-box-back"></div><div class="UNIQUE_ID-button" id="UNIQUE_ID-box-hide">Ukryj okno</div><div class="UNIQUE_ID-button" id="UNIQUE_ID-box-settings">Ustawienia</div><div class="UNIQUE_ID-button" id="UNIQUE_ID-box-dismiss">Odrzuć <span>po 15 sekundach</span></div><div class="UNIQUE_ID-button" id="UNIQUE_ID-box-position">Wyświetl <span>u dołu po prawej</span></div></div><div id="UNIQUE_ID-box-list"><div class="UNIQUE_ID-tracker">Google Analytics</div></div><div id="UNIQUE_ID-box-main"><div class="UNIQUE_ID-button" id="UNIQUE_ID-box-options"></div><div class="UNIQUE_ID-button" id="UNIQUE_ID-box-trackers-text">Tropiciel</div><div style="right: 41.5px ! important; bottom: 49px ! important;" class="UNIQUE_ID-button" id="UNIQUE_ID-box-trackers-count">1</div></div></div></body></html>
