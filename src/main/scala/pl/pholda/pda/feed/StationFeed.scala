@@ -24,7 +24,6 @@ class StationFeed(browserActor: ActorRef)(implicit ec: ExecutionContext) {
     browserActor ? BrowserActor.Get(url(query)) map { case document: Document =>
       val tds = document extract elementList("td")
       tds map { case td =>
-        println(s">>>${td extract attr("onclick")("td")}")
         Station(
         stationId = extractStationId(td extract attr("onclick")("td")),
         name = td extract text("td")
