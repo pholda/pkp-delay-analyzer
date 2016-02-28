@@ -37,13 +37,8 @@ class TrainAtStationFeed(browserActor: ActorRef)(implicit ec: ExecutionContext) 
 
   implicit val timeout = Timeout(5 seconds)
 
-  protected val trainIdRegex = "p=train&id=(\\d+)$".r
-
-  protected val delayRegex = "(\\d+)".r
-
   def getAll(stationId: StationId): Future[List[TrainAtStation]] = {
     val url = s"http://infopasazer.intercity.pl/?p=station&id=${URLEncoder.encode(stationId.toString, "UTF-8")}"
-    println(url)
     browserActor ? BrowserActor.Get(url) map { case document: Document =>
       val tables: List[Element] = document extract elementList(".table-delay")
       val arrivals: List[Element] = tables.head extract elementList("tr") tail
@@ -84,7 +79,7 @@ class TrainAtStationFeed(browserActor: ActorRef)(implicit ec: ExecutionContext) 
   protected def groupTrainTable(rows: List[Element]): Map[TrainId, Element] = {
     rows map { row =>
       val cols: List[Element] = row extract elementList("td")
-      val trainId = trainIdRegex.findFirstMatchIn(cols.head extract attr("href")("a")).get.group(1).toInt
+      val trainId = extractTrainId(cols.head extract attr("href")("a"))
       trainId -> row
     } toMap
   }

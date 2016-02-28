@@ -3,18 +3,16 @@ package pl.pholda.pda.feed
 import java.net.URLEncoder
 
 import akka.actor.ActorRef
+import akka.pattern.ask
 import akka.util.Timeout
-import net.ruippeixotog.scalascraper.browser.Browser
+import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
+import net.ruippeixotog.scalascraper.dsl.DSL._
 import org.jsoup.nodes.Document
 import pl.pholda.pda.actor.BrowserActor
 import pl.pholda.pda.model.Station
 
-import scala.concurrent.{ExecutionContext, Future}
-import akka.pattern.ask
 import scala.concurrent.duration._
-import net.ruippeixotog.scalascraper.dsl.DSL._
-import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
-import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
+import scala.concurrent.{ExecutionContext, Future}
 
 class StationFeed(browserActor: ActorRef)(implicit ec: ExecutionContext) {
   implicit val timeout = Timeout(5 seconds)
@@ -23,12 +21,12 @@ class StationFeed(browserActor: ActorRef)(implicit ec: ExecutionContext) {
     s"http://infopasazer.intercity.pl/?p=stations&q=${URLEncoder.encode(query, "UTF-8")}"
 
   def search(query: String): Future[List[Station]] = {
-    val url = s"http://infopasazer.intercity.pl/?p=stations&q=${URLEncoder.encode(query, "UTF-8")}"
-
-    browserActor ? BrowserActor.Get(url) map { case document: Document =>
+    browserActor ? BrowserActor.Get(url(query)) map { case document: Document =>
       val tds = document extract elementList("td")
-      tds map { case td => Station(
-        stationId = (td extract attr("onclick")("td")).stripPrefix("window.location='?p=station&id=").stripSuffix("'").toInt,
+      tds map { case td =>
+        println(s">>>${td extract attr("onclick")("td")}")
+        Station(
+        stationId = extractStationId(td extract attr("onclick")("td")),
         name = td extract text("td")
       )}
     }
